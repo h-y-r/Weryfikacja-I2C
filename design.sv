@@ -1,10 +1,23 @@
 `timescale 1ns/1ps
+// prescaler daje 100kHz SCL - jak w standard mode i2c
+//do symulacji mozna zmniejszyc ale wtedy 
+//zapisac gdzies wartosci
+//staralem sie lepszy ale liczby musza byc calkowite :(
+//szybki clk potrzebny do supersamplingu odczytu zeby mozna bylo 
+//wykrywac/ robic zmiany w trakcie jak SCL sie nie switchuje
+package parameters;
+  parameter int halfPeriod = 2;
+  parameter int delay = halfPeriod*2;
+  parameter int prsc = 125; 
+endpackage
+
 module I2C_generic (inout SDA, input SCL, input clk);
+  import parameters::*;
   parameter addr = 7'b1;
   reg[7:0] mem;
   reg[6:0] addr_cnt;
   logic start_flag = 0;
-  logic listen_data = 0;
+  //logic listen_data = 0;
   logic sda_prev = 0;
   logic scl_prev = 0;
   //logic sda_local = 0;
@@ -18,7 +31,7 @@ module I2C_generic (inout SDA, input SCL, input clk);
   always_ff @(negedge clk) begin
     sda_prev <= SDA;
     scl_prev <= SCL;
-  end //scl prev potrzebne zeby nie dzialal start jak w tym samym momencie sie zmienia SDA i SCL, ale w razie co mozna chyba to wywalic
+  end //scl prev potrzebne zeby nie dzialal start jak w tym samym momencie sie zmienia SDA i SCL, ale w razie co mozna chyba to wywalic (tez z ifa wczesniej)
   
   
   
@@ -46,9 +59,8 @@ module I2C_generic (inout SDA, input SCL, input clk);
   
 endmodule
 
-module I2C_driver#(parameter int prsc = 4,
-                   parameter int delay = 2) //min delay = 2 - zeby reszta mogla zareagowac na zmiany (musi minac pelny okres szybkiego clk)
-  (inout SDA, output SCL, input clk);
+module I2C_driver(inout SDA, output SCL, input clk);
+  import parameters::*;
   logic scl_local = 0;
   logic sda_local = 1;
   reg[6:0] addr_obj = 7'b1011101;
@@ -60,11 +72,11 @@ module I2C_driver#(parameter int prsc = 4,
   task send_addr;
     begin
       @(posedge scl_local);
-        #delay sda_local = 0; //start condition
+      #(delay) sda_local = 0; //start condition
       
       for (int i = 6; i >= 0; i--) begin
         @(negedge scl_local);
-        #delay sda_local <= addr_obj[i]; //wysylanie bitow adresu
+        #(delay) sda_local <= addr_obj[i]; //wysylanie bitow adresu
       end
     end
   endtask
