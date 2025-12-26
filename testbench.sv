@@ -37,15 +37,12 @@ module testbench;
     #10;
     rst = 1;
     
-    dv_i2c.sendStart();
-    dv_i2c.sendAddressRW(7'b0000111, 1);
-    dv_i2c.getACK();
-    dv_i2c.readData();
+    //dv_i2c.writeTransaction(7'b0000111, 8'b10101010);
+	dv_i2c.readTransaction(7'b0000111);
     dv_i2c.genSCL();
+    dv_i2c.sendStop();
     dv_i2c.genSCL();
-    dv_i2c.genSCL();
-    //dv_i2c.sendBit(1);
-
+    
     $display("Simulation Finished.");
 
     #100000
