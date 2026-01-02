@@ -39,9 +39,9 @@ module testbench;
     
     //dv_i2c.writeTransaction(7'b0000111, 8'b10101010);
 	dv_i2c.readTransaction(7'b0000111);
-    dv_i2c.genSCL();
-    dv_i2c.sendStop();
-    dv_i2c.genSCL();
+    //dv_i2c.genSCL();
+    //dv_i2c.sendStop();
+    //dv_i2c.genSCL();
     
     $display("Simulation Finished.");
 
