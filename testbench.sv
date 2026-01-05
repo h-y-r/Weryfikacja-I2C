@@ -17,7 +17,7 @@ module testbench;
     .clk(clk),
     .data_send(16'hDEAD), 
     .SDA_bidir(SDA),      
-    .SCL_bidir(SCL),     
+    .SCL_bidir(SCL),    
     .data_received()
   );
   
@@ -27,7 +27,20 @@ module testbench;
     .SCL(SCL)
   );
 
+//   I2C_Config i2c_cfg;
+  
   initial begin
+//     i2c_cfg = new();
+//     if (!i2c_cfg.randomize()) begin
+//       $error("Randomization failed!");
+//       $finish;
+//     end
+//     i2c_cfg.disp();
+//     dv_i2c.HIGH_PERIOD_SCL = i2c_cfg.high_period;
+//     dv_i2c.LOW_PERIOD_SCL  = i2c_cfg.low_period;
+//     dv_i2c.DATA_SETUP_TIME = i2c_cfg.setup_time;
+//     dv_i2c.RANDOM_STOP_BIT = i2c_cfg.rand_bit;
+    
 	$dumpfile("dump.vcd");
     $dumpvars(0,testbench);
     #10;
@@ -38,7 +51,10 @@ module testbench;
     rst = 1;
     
     //dv_i2c.writeTransaction(7'b0000111, 8'b10101010);
-	dv_i2c.readTransaction(7'b0000111);
+	//dv_i2c.readTransaction(7'b0000111);
+    dv_i2c.writeRandomStop(7'b0000111, 8'b10101010, 2);
+	dv_i2c.genSCL();
+	dv_i2c.writeTransaction(7'b0000111, 8'b10101010);
     //dv_i2c.genSCL();
     //dv_i2c.sendStop();
     //dv_i2c.genSCL();
