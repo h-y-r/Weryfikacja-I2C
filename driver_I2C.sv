@@ -44,6 +44,7 @@ module driver_I2C(input logic clk, inout SDA, inout SCL);
   bit ack_got = 0;
   bit [7:0] data_got;
   int i;
+  
 
   // dodane
   typedef enum logic [3:0] {
@@ -56,8 +57,9 @@ module driver_I2C(input logic clk, inout SDA, inout SCL);
     M_DATA_RX,   // odczyt danych (target->master)
     M_STOP,      // generowanie STOP
     M_DONE,      // wszystko OK
-    M_ERROR      // blad nack po adresie czy cos
-	M_ADDR_10BIT
+    M_ERROR,      // blad nack po adresie czy cos
+	M_ADDR_10BIT, //adresowanie 10 bit
+	M_DEVICE_ID //zbiera ID od slave'a
   } master_phase_e;
 
   master_phase_e phase = M_IDLE;
@@ -234,7 +236,7 @@ task getACK(input bit is_addr_ack = 1'b0);
       // dodane
       phase = M_DATA_RX;
       // koniec dodanego
-
+	  data_got = 8'b0;	
       for (i = 7; i >= 0; i--) begin
         // dodane
       	bit_idx = i;
@@ -482,6 +484,59 @@ task sendAdress10Bit(input bit [9:0] addr, input bit rw);
 	bit_idx = BIT_RW;
 	SDA_ctrl = 1;
     getACK(1'b1); 		
+endtask
+
+task getDeviceID(input bit [6:0] addr)
+	bit [7:0] devID1 = 8'b11111000;
+	bit [7:0] devID2 = 8'b11111001;
+	phase = M_DEVICE_ID;	
+	sendStart();
+	
+	for (i = 7; i >= 0; i--) begin
+        bit_idx = i;
+        sendBit(devID1[i]);
+    end
+	
+	bit_idx = BIT_ACK;
+    SDA_ctrl = 1;
+	getACK(1'b1);
+	
+	for (i = 6; i >= 0; i--) begin
+        bit_idx = i;
+        sendBit(addr[i]);
+    end	
+	sendBit(1'b1); //dont care bit
+	
+	bit_idx = BIT_ACK;
+	SDA_ctrl = 1;
+	getACK(1'b1);
+	
+	sendStart();
+	
+	for (i = 7; i >= 0; i--) begin
+        bit_idx = i;
+        sendBit(devID2[i]);
+    end
+	
+	bit_idx = BIT_ACK;
+	SDA_ctrl = 1;
+	getACK(1'b1);
+	
+	if(ack_got) begin
+	for (k = 3; k > 0; k--) begin
+	  byte_idx = (numBytes - k);
+
+	  readData();
+	  if(k>1) begin
+		// ACK po bajcie read (master potwierdza że chce kolejny)
+		bit_idx = BIT_ACK;
+		sendBit(1'b0);
+	  end
+	end
+	end
+	
+	sendStop();
+	
 endtask
 			
 task transactionDriver();
